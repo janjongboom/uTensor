@@ -63,7 +63,7 @@ Operator* Context::registerOpTable(std::function<void*(void)> func, TName _name)
   } else {
     op = opTable[_name];
   }
-  
+
   return op;
 }
 
@@ -123,7 +123,7 @@ void Context::incrTNameListRef(const TNameList &t_list) {
       record.count++;
       rTable[t_name] = record;
     }
-    
+
       //if an initial ref value is supplied to the tensor at compile time
                     //then this function does nothing
                     //otherwise, it increment the  ref count of the tensor
@@ -185,12 +185,43 @@ int Context::eval(void) {
   //unref2nullTensors();
 
   for(auto op:op_list) {
+    printf("op: inputs=%u outputs=%u\n", op->getNumInputs(), op->getNumOutputs());
     initTensors(op->getInputs());
     initTensors(op->getOutputs());
+
+    for (auto in:op->getInputs()) {
+      printf("input shape ");
+      for (size_t ix = 0; ix < in->getDim(); ix++) {
+        printf("%lu by ", in->getShape()[ix]);
+      }
+      printf("\n");
+    }
 
     op->inFocus();
     op->compute();
     op->deFocus();
+
+    for (auto in:op->getOutputs()) {
+      printf("output shape ");
+      for (size_t ix = 0; ix < in->getDim(); ix++) {
+        printf("%lu by ", in->getShape()[ix]);
+      }
+      printf("\n");
+      printf("output memory (%lu bytes): ", in->getSize_in_bytes());
+      if (in->unit_size() == 4) {
+        const float* ptr_pred = in->read<float>(0, 0);
+        for (size_t ix = 0; ix < in->getSize_in_bytes() / 4; ix++) {
+          printf("%f ", *(ptr_pred + ix));
+        }
+      }
+      else {
+        const uint8_t* ptr_pred = in->read<uint8_t>(0, 0);
+        for (size_t ix = 0; ix < in->getSize_in_bytes(); ix++) {
+          printf("%02x ", *(ptr_pred + ix));
+        }
+      }
+      printf("\n");
+    }
 
     deinitTensors(op->getInputs());
     deinitTensors(op->getOutputs());
@@ -221,7 +252,6 @@ uint32_t Context::gc(void) {
   for(auto name:nlist) {
     delTensor(name);
   }
-  
+
   return (uint32_t) nlist.size();
 }
-

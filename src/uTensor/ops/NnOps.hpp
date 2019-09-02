@@ -12,6 +12,7 @@ template <class Tin, class Tout>
 void Softmax(S_TENSOR input, S_TENSOR output)
 {
     size_t dim = input->getDim(), row_dim_max, col_dim_max, row_stride, col_stride;
+    printf("softmax dim %lu\n", dim);
     if (dim > 2 || dim < 1) {
         ERR_EXIT("Softmax only supports 1D or 2D tensor");
     }
@@ -27,6 +28,9 @@ void Softmax(S_TENSOR input, S_TENSOR output)
         col_stride = input->getStride(1);
     }
 
+    printf("row_dim_max %lu, col_dim_max %lu, row_stride %lu, col_stride %lu output->getSize() %lu\n",
+        row_dim_max, col_dim_max, row_stride, col_stride, output->getSize());
+
     if (output && output->getSize() == 0) {
         output->resize(input->getShape());
     }
@@ -35,7 +39,6 @@ void Softmax(S_TENSOR input, S_TENSOR output)
 
     for (size_t row_dim = 0; row_dim < row_dim_max; ++row_dim) {
         size_t base_offset = row_dim * row_stride;
-
         Tout max = 0;
 
         // calculate the max first, as we need to subtract max from every value
@@ -48,17 +51,21 @@ void Softmax(S_TENSOR input, S_TENSOR output)
             }
         }
 
+        printf("base_offset %lu\n", base_offset);
         Tout reduce_sum = 0;
         for (size_t col_dim = 0; col_dim < col_dim_max; ++col_dim) {
             size_t offset = base_offset + col_dim * col_stride;
             Tout logit = (Tout) in_ptr[offset];
+            printf("logit prior to min %f\n", logit, exp(logit));
             logit -= max;
+            printf("logit %f, exp() %f\n", logit, exp(logit));
             reduce_sum += exp(logit);
         }
         for (size_t col_dim = 0; col_dim < col_dim_max; ++col_dim){
             size_t offset = base_offset + col_dim * col_stride;
             Tout logit = (Tout) in_ptr[offset];
             logit -= max;
+            printf("logit %f, reduce_sum %f\n", logit, reduce_sum);
             out_ptr[offset] = exp(logit) / reduce_sum;
         }
     }

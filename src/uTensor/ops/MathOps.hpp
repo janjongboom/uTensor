@@ -100,7 +100,7 @@ class RequantizeOp : public Operator {
     }
 
     virtual void compute() override {
-        Requantize<int, float, unsigned char>(inputs[0], inputs[1], 
+        Requantize<int, float, unsigned char>(inputs[0], inputs[1],
                 inputs[2], inputs[3], inputs[4],
                 outputs[0], outputs[1], outputs[2]);
     }
@@ -184,6 +184,7 @@ void MinMaxHelper(S_TENSOR input, S_TENSOR dim, S_TENSOR out, bool find_min) {
 
   size_t out_index = 0;
   permuteIndexTransform trans(outShape, permute);
+  printf("MinMaxHelper input size %lu, reduce_size %lu\n", input->getSize(), reduce_size);
   for (uint32_t j = 0; j < input->getSize(); j += reduce_size) {
 
     TIn tmp_val;
@@ -206,6 +207,7 @@ void MinMaxHelper(S_TENSOR input, S_TENSOR dim, S_TENSOR out, bool find_min) {
       }
     }
     p_out[out_index] = tmp_val;
+    printf("p_out[%lu]=%f\n", out_index, tmp_val);
     out_index++;
   }
 }
@@ -258,7 +260,7 @@ void ArgMax(S_TENSOR input, S_TENSOR dim, S_TENSOR out) {
   if (out->getSize() == 0) {
     out->resize(outShape);
   }
-  
+
 
   // construct the origin-shape for permuteIndexTransform
   TensorShape vOutShape = outShape;
@@ -421,7 +423,7 @@ void QuantizedMul(S_TENSOR input_x, S_TENSOR input_y,
   const T1* ptr_x = input_x->read<T1>(0, 0);
   const T1* ptr_y = input_y->read<T1>(0, 0);
 
-  // if (!output->getSize()) 
+  // if (!output->getSize())
     output->resize(input_x->getShape());
 
   Toutput* ptr_out = output->write<Toutput>(0, 0);
@@ -441,7 +443,7 @@ void QuantizedMul(S_TENSOR input_x, S_TENSOR input_y,
 
   QuantizationRangeForMultiplication<T1, T2, Toutput>(value_x_min, value_x_max, value_y_min, value_y_max,
       &value_out_min, &value_out_max);
-  
+
   *(ptr_out_min) = static_cast<float>(value_out_min);
   *(ptr_out_max) = static_cast<float>(value_out_max);
 }
@@ -470,7 +472,7 @@ class QuantizedAddOp : public Operator {
     }
 
     virtual void compute() override {
-        QuantizedAdd<T1, T2, T3>(inputs[0], inputs[3],  
+        QuantizedAdd<T1, T2, T3>(inputs[0], inputs[3],
             inputs[1], inputs[2], inputs[4], inputs[5],
             outputs[0], outputs[1], outputs[2]);
     }
@@ -485,7 +487,7 @@ class QuantizedMulOp : public Operator {
     }
 
     virtual void compute() override {
-        QuantizedMul<T1, T2, T3>(inputs[0], inputs[3],  
+        QuantizedMul<T1, T2, T3>(inputs[0], inputs[3],
             inputs[1], inputs[2], inputs[4], inputs[5],
             outputs[0], outputs[1], outputs[2]);
     }

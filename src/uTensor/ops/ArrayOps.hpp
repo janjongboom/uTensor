@@ -353,7 +353,7 @@ void QuantizeV2(S_TENSOR input, S_TENSOR _min_range, S_TENSOR _max_range,
 
     *output_min_ptr = min_range;
     *output_max_ptr = max_range;
-    
+
 }
 
 class QuantizeV2Op : public Operator {
@@ -367,7 +367,7 @@ class QuantizeV2Op : public Operator {
       QuantizeV2<unsigned char>(inputs[0], inputs[1], inputs[2],
               outputs[0], outputs[1], outputs[2]);
     }
-}; 
+};
 
 //mode = MIN_FIRST
 //name = unspecified
@@ -389,8 +389,11 @@ void dequantize(S_TENSOR input, S_TENSOR min_range, S_TENSOR max_range, S_TENSOR
     //quantization_utils.h: 141
     for(uint32_t i = 0; i < input->getSize(); i++) {
         float val = static_cast<float>(input_ptr[i]);
+        printf("ArrayOps.dequantize, range_min_rounded %f, lowest_quantized %f, range_scale %f, val %f\n",
+            q2f.range_min_rounded, q2f.lowest_quantized(), q2f.range_scale, val);
         output_ptr[i] = ((q2f.range_min_rounded - q2f.lowest_quantized() * q2f.range_scale) + \
                         val * q2f.range_scale);
+        printf("dequantized value %f\n", output_ptr[i]);
     }
 }
 class DequantizeOp : public Operator {
@@ -486,7 +489,7 @@ void gather(S_TENSOR input, S_TENSOR indices, S_TENSOR output) {
     if (!output->getSize())
         output->resize(indices->getShape());
     T* out_ptr = output->write<T>(0,0);
-    const uint32_t* indices_ptr = indices->read<uint32_t>(0,0); //Can probably templatize this 
+    const uint32_t* indices_ptr = indices->read<uint32_t>(0,0); //Can probably templatize this
 
     for(uint32_t i = 0; i < indices->getSize(); i++){
         if(indices_ptr[i] > input->getSize())
